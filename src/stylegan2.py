@@ -818,7 +818,9 @@ class Trainer():
         if plotting:
             self.image_plotter = VisdomImagePlotter()
             self.line_plotter = VisdomLinePlotter()
-
+        else:
+            self.image_plotter = None
+            self.line_plotter = None
     @property
     def image_extension(self):
         return 'jpg' if not self.transparent else 'png'
