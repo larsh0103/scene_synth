@@ -29,6 +29,7 @@ class Trainer():
         nz = 100,
         real_label = 1.,
         fake_label = 0.,
+        plotting = False
         ):
         self.device=device
         self.GAN = GAN
@@ -42,8 +43,10 @@ class Trainer():
         self.fake_label = fake_label
         self.optimizerD = optim.Adam(self.GAN.D.parameters(), lr=lr, betas=(beta1, 0.999))
         self.optimizerG = optim.Adam(self.GAN.G.parameters(), lr=lr, betas=(beta1, 0.999))
-        self.line_plotter = VisdomLinePlotter()
-        self.image_plotter = VisdomImagePlotter()
+        self.plotting = plotting
+        if plotting:
+            self.line_plotter = VisdomLinePlotter()
+            self.image_plotter = VisdomImagePlotter()
 
     def train(self) :
         # Training Loop
@@ -121,11 +124,12 @@ class Trainer():
                     print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                         % (epoch, self.num_epochs, i, len(self.dataloader),
                             errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
-                    self.line_plotter.plot(var_name = "loss", split_name= 'Discriminator', 
-                    title_name = 'Training Loss', x = epoch + i/len(self.dataloader), y = errD.item())
+                    if self.plotting:
+                        self.line_plotter.plot(var_name = "loss", split_name= 'Discriminator', 
+                        title_name = 'Training Loss', x = epoch + i/len(self.dataloader), y = errD.item())
 
-                    self.line_plotter.plot(var_name = "loss", split_name= 'Generator', 
-                    title_name = 'Training Loss', x = epoch + i/len(self.dataloader), y = errG.item())
+                        self.line_plotter.plot(var_name = "loss", split_name= 'Generator', 
+                        title_name = 'Training Loss', x = epoch + i/len(self.dataloader), y = errG.item())
 
                 # # Save Losses for plotting later
                 # G_losses.append(errG.item())
@@ -135,14 +139,16 @@ class Trainer():
                 if (iters % 500 == 0) or ((epoch == self.num_epochs-1) and (i == len(self.dataloader)-1)):
                     with torch.no_grad():
                         fake = self.GAN.G(self.fixed_noise).detach().cpu()
-                    self.image_plotter.plot(vutils.make_grid(fake, padding=2, normalize=True),name="generator-output")
+                    if self.plotting:
+                        self.image_plotter.plot(vutils.make_grid(fake, padding=2, normalize=True),name="generator-output")
                     # img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
 
                 iters += 1
 
             with torch.no_grad():
                 fake = self.GAN.G(self.fixed_noise).detach().cpu()
-                self.image_plotter.plot(vutils.make_grid(fake, padding=2, normalize=True),name="generator-output")
+                if self.plotting:
+                    self.image_plotter.plot(vutils.make_grid(fake, padding=2, normalize=True),name="generator-output")
                 # img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
 
             torch.save({

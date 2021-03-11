@@ -692,6 +692,7 @@ class Trainer():
         results_dir = 'results',
         models_dir = 'models',
         transfer_from_checkpoint = None,
+        plotting = False,
         base_dir = './',
         image_size = 128,
         network_capacity = 16,
@@ -813,9 +814,13 @@ class Trainer():
         self.is_main = rank == 0
         self.rank = rank
         self.world_size = world_size
-        self.image_plotter = VisdomImagePlotter()
-        self.line_plotter = VisdomLinePlotter()
-
+        self.plotting = plotting
+        if plotting:
+            self.image_plotter = VisdomImagePlotter()
+            self.line_plotter = VisdomLinePlotter()
+        else:
+            self.image_plotter = None
+            self.line_plotter = None
     @property
     def image_extension(self):
         return 'jpg' if not self.transparent else 'png'
@@ -1085,12 +1090,14 @@ class Trainer():
 
         generated_images = self.generate_truncated(self.GAN.S, self.GAN.G, latents, n, trunc_psi = self.trunc_psi)
         torchvision.utils.save_image(generated_images, str(self.results_dir / self.name / f'{str(num)}.{ext}'), nrow=num_rows)
-        self.image_plotter.plot(vutils.make_grid(generated_images, padding=2, normalize=True),name="generator-S-output")
+        if self.plotting:
+            self.image_plotter.plot(vutils.make_grid(generated_images, padding=2, normalize=True),name="generator-S-output")
         # moving averages
 
         generated_images = self.generate_truncated(self.GAN.SE, self.GAN.GE, latents, n, trunc_psi = self.trunc_psi)
         torchvision.utils.save_image(generated_images, str(self.results_dir / self.name / f'{str(num)}-ema.{ext}'), nrow=num_rows)
-        self.image_plotter.plot(vutils.make_grid(generated_images, padding=2, normalize=True),name="generator-SE-output")
+        if self.plotting:
+            self.image_plotter.plot(vutils.make_grid(generated_images, padding=2, normalize=True),name="generator-SE-output")
 
         # mixing regularities
 

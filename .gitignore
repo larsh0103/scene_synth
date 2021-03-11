@@ -3,3 +3,4 @@ checkpoints
 datasets
 models
 results
+__pycache__/
